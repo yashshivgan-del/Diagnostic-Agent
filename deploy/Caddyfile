@@ -1,0 +1,7 @@
+{$SITE_DOMAIN} {
+	encode gzip
+	# Server-Sent Events: flush immediately, no buffering
+	reverse_proxy backend:8000 {
+		flush_interval -1
+	}
+}

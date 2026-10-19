@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Predictive Diagnostic Assistant</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" data-nav="/">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span><strong>Predictive Diagnostic Assistant</strong><small>AWS workshop &middot; PUMP-01</small></span>
+  </a>
+  <nav class="topnav">
+    <a href="/" data-nav="/">Runs</a>
+    <button class="btn primary" id="btnStartTop">Start run</button>
+  </nav>
+</header>
+
+<main id="view"></main>
+
+<dialog id="startDialog">
+  <form method="dialog" id="startForm" novalidate>
+    <h2>Start a run</h2>
+    <p class="muted">The simulator runs PUMP-01 for up to 10 minutes. A random fault develops at least every 5 minutes; when the model confirms an anomaly, the Karini agents diagnose it and email you the report.</p>
+    <label>Email <span class="req">*</span>
+      <input type="email" id="fEmail" required autocomplete="email" placeholder="you@example.com">
+    </label>
+    <label>Run label <span class="muted">(optional)</span>
+      <input type="text" id="fLabel" maxlength="60" placeholder="e.g. Priya - first try">
+    </label>
+    <details id="kariniBox" class="karini-box">
+      <summary>Your Karini recipe</summary>
+      <p class="fine">Paste the webhook details from your Karini portal so this run uses your own recipe. They are remembered in this browser and reused next time. Leave blank to use the workshop default.</p>
+      <label>Karini base URL
+        <input type="url" id="fKBase" maxlength="300" placeholder="https://app.karini.ai" autocomplete="off">
+      </label>
+      <label>Recipe ID
+        <input type="text" id="fKRecipe" maxlength="200" placeholder="recipe id or full webhook URL" autocomplete="off">
+      </label>
+      <label>API token (x-api-token)
+        <input type="password" id="fKToken" maxlength="400" placeholder="your x-api-token" autocomplete="off">
+      </label>
+    </details>
+    <p class="fine">Your email is used only to send this run's diagnostic reports (max 5) and is masked on screen. Data is synthetic.</p>
+    <p class="form-error" id="fError" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" class="btn" id="btnCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="btnStart">Start</button>
+    </div>
+  </form>
+</dialog>
+
+<template id="tplHome">
+  <section class="home">
+    <div class="hero">
+      <div>
+        <h1>Watch an AI agent team diagnose a failing pump, live.</h1>
+        <p>Telemetry from a simulated centrifugal pump is scored by an anomaly model on Amazon SageMaker. When an anomaly is confirmed, a Karini AI recipe gathers evidence from machine logs and past incidents, diagnoses the likely cause, writes a report and emails it to you.</p>
+        <button class="btn primary large" data-action="start">Start run</button>
+      </div>
+      <ol class="flow">
+        <li><b>Simulate</b><span>reading every 10 s</span></li>
+        <li><b>Score</b><span>SageMaker RCF + XGBoost</span></li>
+        <li><b>Confirm</b><span>2 of last 3 readings</span></li>
+        <li><b>Agents</b><span>evidence &rarr; diagnosis &rarr; report</span></li>
+        <li><b>Email</b><span>report to your inbox</span></li>
+      </ol>
+    </div>
+    <h2 class="section-title">Your recent runs <span class="muted small">(this browser)</span></h2>
+    <div class="table-wrap"><table class="runs"><thead><tr>
+      <th>Started</th><th>Label</th><th>Email</th><th>Status</th><th>Readings</th><th>Agent runs</th><th>Reports</th>
+    </tr></thead><tbody id="runsBody"><tr><td colspan="7" class="muted">Loading...</td></tr></tbody></table></div>
+  </section>
+</template>
+
+<template id="tplRun">
+  <section class="run">
+    <div class="runbar card">
+      <div class="runbar-main">
+        <span class="pill" id="runStatus">-</span>
+        <div>
+          <div class="run-title" id="runTitle">Run</div>
+          <div class="muted mono small" id="runId"></div>
+        </div>
+      </div>
+      <div class="runbar-stats">
+        <div><span class="stat-label">Auto-stop in</span><span class="stat" id="runCountdown">-</span></div>
+        <div><span class="stat-label">Readings</span><span class="stat" id="runReadings">0</span></div>
+        <div><span class="stat-label">Agent runs</span><span class="stat" id="runTriggers">0</span></div>
+        <div><span class="stat-label">Emails</span><span class="stat" id="runEmails">0</span></div>
+        <div><span class="stat-label">Model</span><span class="stat small" id="runMode">-</span></div>
+      </div>
+      <div class="runbar-actions">
+        <button class="btn" id="btnInject" title="Start a random fault on the next reading">Inject fault now</button>
+        <button class="btn danger" id="btnStop">Stop</button>
+      </div>
+    </div>
+    <div class="notice" id="runNotice" hidden></div>
+
+    <div class="grid-top">
+      <div class="card">
+        <div class="card-head"><h2>Telemetry</h2><span class="muted small">shaded band = normal range</span></div>
+        <div class="tiles" id="tiles"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Anomaly score</h2><span class="legend"><i class="lg-line"></i>score <i class="lg-th"></i>threshold <i class="lg-trg"></i>agents triggered</span></div>
+        <div id="scoreChart" class="chart"></div>
+        <div class="latest" id="latest"></div>
+      </div>
+    </div>
+
+    <div class="grid-bottom">
+      <div class="card">
+        <div class="card-head"><h2>Agent activity</h2><span class="muted small">one card per confirmed anomaly</span></div>
+        <div id="timeline" class="timeline"><p class="muted empty">No anomaly yet. A fault starts within the first 2 minutes, or press <b>Inject fault now</b>.</p></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>Machine log</h2><span class="muted small">newest first</span></div>
+        <ul id="logs" class="logs"></ul>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

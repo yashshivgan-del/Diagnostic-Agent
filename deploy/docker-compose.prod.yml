@@ -1,0 +1,21 @@
+# PRODUCTION on one EC2 instance: backend + Caddy (automatic HTTPS for your domain).
+# Database = Amazon RDS (not in this file). Run from the repository root:
+#   docker compose -f deploy/docker-compose.prod.yml up -d --build
+services:
+  backend:
+    build: { context: .., dockerfile: backend/Dockerfile }
+    env_file: ../.env
+    restart: unless-stopped
+    expose: ["8000"]
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?set SITE_DOMAIN, e.g. pda.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [backend]
+volumes:
+  caddy_data:

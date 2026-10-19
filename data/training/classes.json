@@ -1,0 +1,26 @@
+{
+  "classes": [
+    "normal",
+    "bearing_wear",
+    "cavitation",
+    "seal_leak",
+    "motor_overload",
+    "misalignment"
+  ],
+  "features": [
+    "temperature_c",
+    "vibration_mm_s",
+    "discharge_pressure_bar",
+    "flow_m3h",
+    "motor_current_a",
+    "rpm"
+  ],
+  "units": {
+    "temperature_c": "degC",
+    "vibration_mm_s": "mm/s RMS",
+    "discharge_pressure_bar": "bar",
+    "flow_m3h": "m3/h",
+    "motor_current_a": "A",
+    "rpm": "rpm"
+  }
+}

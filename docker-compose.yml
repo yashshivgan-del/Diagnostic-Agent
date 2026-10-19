@@ -1,0 +1,44 @@
+# LOCAL dry run: Postgres + backend + mock Karini (no AWS, no Karini account needed).
+#   cp .env.example .env && docker compose up --build    ->  http://localhost:8000
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: pda
+      POSTGRES_USER: pda_owner
+      POSTGRES_PASSWORD: pda_owner_pw
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./db/02_agent_functions.sql:/docker-entrypoint-initdb.d/02_agent_functions.sql:ro
+      - ./db/03_roles.sql:/docker-entrypoint-initdb.d/03_roles.sql:ro
+      - ./db/04_seed.sql:/docker-entrypoint-initdb.d/04_seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pda_owner -d pda"]
+      interval: 3s
+      retries: 30
+
+  mock-karini:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    command: ["uvicorn", "tools.mock_karini:app", "--host", "0.0.0.0", "--port", "8090"]
+    environment:
+      MOCK_AGENT_DATABASE_URL: postgresql://pda_agent:CHANGE_ME_agent_password@postgres:5432/pda
+      MOCK_TOKEN: dev-token
+      MOCK_STEP_DELAY_S: "2"
+    depends_on: { postgres: { condition: service_healthy } }
+
+  backend:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://pda_app:CHANGE_ME_app_password@postgres:5432/pda
+      # Local default = mock Karini. To test the real recipe locally, set these three in your shell.
+      KARINI_BASE_URL: ${LOCAL_KARINI_BASE_URL:-http://mock-karini:8090}
+      KARINI_RECIPE_ID: ${LOCAL_KARINI_RECIPE_ID:-mock}
+      KARINI_API_TOKEN: ${LOCAL_KARINI_API_TOKEN:-dev-token}
+    ports: ["8000:8000"]
+    depends_on: { postgres: { condition: service_healthy } }
+
+volumes:
+  pgdata:

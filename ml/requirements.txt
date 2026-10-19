@@ -1,0 +1,8 @@
+# SageMaker Python SDK v2 API is used (RandomCutForest, Estimator, image_uris).
+sagemaker>=2.200,<3
+boto3>=1.35,<2
+numpy
+pandas
+# local_model_check.py only
+xgboost>=2.0
+scikit-learn>=1.3

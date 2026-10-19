@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f4f5f7;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 0;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="width:640px;max-width:640px;background:#ffffff;border:1px solid #e2e5ea;border-radius:8px;font-family:Arial,Helvetica,sans-serif;color:#1f2430;">
+
+            <!-- header -->
+            <tr>
+              <td style="background:#1f2a44;color:#ffffff;padding:18px 24px;border-radius:8px 8px 0 0;">
+                <div style="font-size:13px;letter-spacing:.5px;opacity:.8;">PREDICTIVE DIAGNOSTIC ASSISTANT &middot; workshop run {{run_label}}</div>
+                <div style="font-size:20px;font-weight:bold;margin-top:4px;">Diagnostic report: {{machine_id}}</div>
+                <div style="font-size:13px;opacity:.8;margin-top:2px;">{{detected_at_utc}}</div>
+              </td>
+            </tr>
+
+            <!-- disclaimer -->
+            <tr>
+              <td style="padding:16px 24px 0 24px;">
+                <div style="background:#fff8e1;border:1px solid #f0d58a;border-radius:6px;padding:10px 12px;font-size:13px;color:#6b5300;">
+                  Decision support only. Hypotheses are not confirmed root causes. Follow SAFE-001 before any intervention.
+                </div>
+              </td>
+            </tr>
+
+            <!-- key facts -->
+            <tr>
+              <td style="padding:16px 24px 0 24px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;">
+                  <tr><td style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;width:200px;">Run</td><td style="padding:6px 10px;border:1px solid #e2e5ea;">{{run_id}}</td></tr>
+                  <tr><td style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;">Event</td><td style="padding:6px 10px;border:1px solid #e2e5ea;">{{event_id}}</td></tr>
+                  <tr><td style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;">Anomaly score / threshold</td><td style="padding:6px 10px;border:1px solid #e2e5ea;">{{anomaly_score}} / {{threshold}}</td></tr>
+                  <tr><td style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;">Model fault class</td><td style="padding:6px 10px;border:1px solid #e2e5ea;">{{predicted_fault}} ({{inference_mode}})</td></tr>
+                  <tr><td style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;">Severity / confidence</td><td style="padding:6px 10px;border:1px solid #e2e5ea;">{{severity}} / {{overall_confidence}}</td></tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- summary -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Summary</div>
+                <div style="font-size:14px;line-height:1.5;margin-top:8px;">{{summary}}</div>
+              </td>
+            </tr>
+
+            <!-- telemetry: one <tr> per sensor -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Telemetry at detection</div>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;margin-top:8px;">
+                  <tr><th style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;text-align:left;">Sensor</th><th style="padding:6px 10px;border:1px solid #e2e5ea;background:#f7f8fa;text-align:left;">Value</th></tr>
+                  {{telemetry_rows}}
+                </table>
+              </td>
+            </tr>
+
+            <!-- observed facts: one <li> per fact -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Observed facts</div>
+                <ul style="font-size:14px;line-height:1.5;margin:8px 0 0 0;padding-left:20px;">
+                  {{observed_facts_items}}
+                </ul>
+              </td>
+            </tr>
+
+            <!-- ranked hypotheses: one card per hypothesis -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Ranked hypotheses</div>
+                {{hypotheses_cards}}
+              </td>
+            </tr>
+
+            <!-- safe checks: one <li> per check -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Recommended safe checks (inspection only)</div>
+                <ul style="font-size:14px;line-height:1.5;margin:8px 0 0 0;padding-left:20px;">
+                  {{safe_checks_items}}
+                </ul>
+              </td>
+            </tr>
+
+            <!-- gaps: one <li> per gap/uncertainty -->
+            <tr>
+              <td style="padding:18px 24px 0 24px;">
+                <div style="font-size:16px;font-weight:bold;border-bottom:2px solid #1f2a44;padding-bottom:4px;">Evidence gaps and uncertainties</div>
+                <ul style="font-size:14px;line-height:1.5;margin:8px 0 0 0;padding-left:20px;">
+                  {{evidence_gaps_items}}
+                </ul>
+              </td>
+            </tr>
+
+            <!-- footer -->
+            <tr>
+              <td style="padding:18px 24px 24px 24px;">
+                <div style="font-size:12px;color:#9099a6;border-top:1px solid #e2e5ea;padding-top:12px;">
+                  This email was generated by an AI diagnostic workflow on synthetic workshop data.
+                </div>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
